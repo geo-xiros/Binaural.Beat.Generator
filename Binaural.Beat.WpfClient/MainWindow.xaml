@@ -36,36 +36,40 @@
 
         <StackPanel Grid.Row="2" Margin="0,0,0,12">
             <TextBlock Text="Target State" FontWeight="SemiBold" Margin="0,0,0,6" />
-            <ComboBox x:Name="PresetComboBox"
+            <ComboBox
+                      ItemsSource="{Binding Presets}"
+                      SelectedItem="{Binding SelectedPreset}"
                       DisplayMemberPath="Name"
-                      SelectedValuePath="Choice"
+                      IsEnabled="{Binding CanEditInputs}"
                       IsEditable="False"
                       MinHeight="30" />
         </StackPanel>
 
         <StackPanel Grid.Row="3" Margin="0,0,0,12">
             <TextBlock Text="Duration (seconds)" FontWeight="SemiBold" Margin="0,0,0,6" />
-            <TextBox x:Name="DurationTextBox"
-                     Text="30"
+            <TextBox
+                     Text="{Binding DurationText, UpdateSourceTrigger=PropertyChanged}"
+                     IsEnabled="{Binding CanEditInputs}"
                      MinHeight="30" />
         </StackPanel>
 
         <GroupBox Grid.Row="4" Header="Session" Margin="0,0,0,12">
             <StackPanel Margin="10">
-                <TextBlock x:Name="SessionNameTextBlock" Text="Session: -" Margin="0,0,0,4" />
-                <TextBlock x:Name="LeftFrequencyTextBlock" Text="Left ear: -" Margin="0,0,0,4" />
-                <TextBlock x:Name="RightFrequencyTextBlock" Text="Right ear: -" />
+                <TextBlock Text="{Binding SessionNameText}" Margin="0,0,0,4" />
+                <TextBlock Text="{Binding LeftFrequencyText}" Margin="0,0,0,4" />
+                <TextBlock Text="{Binding RightFrequencyText}" />
             </StackPanel>
         </GroupBox>
 
         <StackPanel Grid.Row="5">
-            <TextBlock x:Name="StatusTextBlock"
-                       Text="Ready"
+            <TextBlock
+                       Text="{Binding Status}"
                        FontWeight="SemiBold"
                        Margin="0,0,0,8" />
-            <ProgressBar x:Name="PlaybackProgressBar"
+            <ProgressBar
                          Minimum="0"
-                         Maximum="100"
+                         Maximum="{Binding ProgressMaximum}"
+                         Value="{Binding ProgressValue, Mode=OneWay}"
                          Height="18" />
         </StackPanel>
 
@@ -73,18 +77,15 @@
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,16,0,0">
-            <Button x:Name="PlayButton"
-                    Content="Play"
+            <Button Content="Play"
                     Width="100"
                     Height="34"
                     Margin="0,0,8,0"
-                    Click="PlayButton_Click" />
-            <Button x:Name="StopButton"
-                    Content="Stop"
+                    Command="{Binding PlayCommand}" />
+            <Button Content="Stop"
                     Width="100"
                     Height="34"
-                    IsEnabled="False"
-                    Click="StopButton_Click" />
+                    Command="{Binding StopCommand}" />
         </StackPanel>
     </Grid>
 </mah:MetroWindow>
