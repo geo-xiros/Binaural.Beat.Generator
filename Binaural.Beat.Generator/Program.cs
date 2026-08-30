@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using NAudio.Wave;
 using Spectre.Console;
 
 /// <summary>
@@ -8,6 +6,8 @@ using Spectre.Console;
 /// </summary>
 class Program
 {
+    private static readonly BinauralBeatService Service = new();
+
     static void Main()
     {
         while (true)
@@ -22,9 +22,9 @@ class Program
                 break;
             }
 
-            float beatFreq = GetBeatFrequency(choice);
+            BinauralSession session = Service.CreateSession(choice);
             int duration = GetDurationInSeconds();
-            PlayBinauralBeat(beatFreq, duration);
+            PlayBinauralBeat(session, duration);
             AnsiConsole.MarkupLine("[green]Finished.[/]");
             AnsiConsole.MarkupLine("[grey]Press any key to return to the menu...[/]");
             Console.ReadKey(true);
@@ -42,35 +42,18 @@ class Program
 
     static int GetChoice()
     {
+        var presets = Service.GetPresets();
         var prompt = new SelectionPrompt<int>()
             .Title("[yellow]Choose target state:[/]")
-            .PageSize(6)
+            .PageSize(presets.Count + 1)
             .UseConverter(choice => choice switch
             {
                 0 => "Exit",
-                1 => "Delta (1–4 Hz) => Deep Sleep",
-                2 => "Theta (4–8 Hz) => Meditation",
-                3 => "Alpha (8–13 Hz) => Relaxation",
-                4 => "Beta (13–30 Hz) => Focus",
-                5 => "Gamma (30–70 Hz) => Cognitive Enhancement",
-                _ => "Unknown"
+                _ => presets.Find(preset => preset.Choice == choice)?.Name ?? "Unknown"
             });
 
-        prompt.AddChoices([0, 1, 2, 3, 4, 5]);
+        prompt.AddChoices([0, .. presets.ConvertAll(preset => preset.Choice)]);
         return AnsiConsole.Prompt(prompt);
-    }
-
-    static float GetBeatFrequency(int choice)
-    {
-        return choice switch
-        {
-            1 => 2f,
-            2 => 6f,
-            3 => 10f,
-            4 => 20f,
-            5 => 40f,
-            _ => throw new ArgumentOutOfRangeException(nameof(choice), "Choice must be between 1 and 5.")
-        };
     }
 
     static int GetDurationInSeconds()
@@ -82,46 +65,26 @@ class Program
                     : ValidationResult.Error("[red]Please enter a positive integer.[/]")));
     }
 
-    static void PlayBinauralBeat(float beatFreq, int durationInSeconds)
+    static void PlayBinauralBeat(BinauralSession session, int durationInSeconds)
     {
-        const float LeftFreq = 400f;
-        float rightFreq = LeftFreq + beatFreq;
-
         AnsiConsole.Write(
-            new Panel($"[bold]Playing:[/] [green]{beatFreq} Hz[/]\nLeft ear: [cyan]{LeftFreq} Hz[/]\nRight ear: [cyan]{rightFreq} Hz[/]")
-                .Header("[white]Session[/]")
+            new Panel($"[bold]Playing:[/] [green]{session.BeatFrequency} Hz[/]\nLeft ear: [cyan]{session.LeftFrequency} Hz[/]\nRight ear: [cyan]{session.RightFrequency} Hz[/]")
+                .Header($"[white]{session.Name} Session[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderColor(Color.Green));
 
-        var provider = new BinauralBeatProvider(LeftFreq, rightFreq);
-        using var waveOut = new WaveOutEvent();
-        waveOut.Init(provider);
-
-        try
-        {
-            waveOut.Play();
-
-            AnsiConsole.Progress()
-                .Columns(
-                [
-                    new TaskDescriptionColumn(),
-                    new ProgressBarColumn(),
-                    new PercentageColumn(),
-                    new RemainingTimeColumn()
-                ])
-                .Start(ctx =>
-                {
-                    var task = ctx.AddTask("[green]Playing[/]", maxValue: durationInSeconds);
-                    while (!task.IsFinished)
-                    {
-                        Thread.Sleep(1000);
-                        task.Increment(1);
-                    }
-                });
-        }
-        finally
-        {
-            waveOut.Stop();
-        }
+        AnsiConsole.Progress()
+            .Columns(
+            [
+                new TaskDescriptionColumn(),
+                new ProgressBarColumn(),
+                new PercentageColumn(),
+                new RemainingTimeColumn()
+            ])
+            .Start(ctx =>
+            {
+                var task = ctx.AddTask("[green]Playing[/]", maxValue: durationInSeconds);
+                Service.Play(session, durationInSeconds, _ => task.Increment(1));
+            });
     }
 }
