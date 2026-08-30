@@ -1,6 +1,4 @@
-using NAudio.Wave;
-
-class BinauralBeatService
+class BinauralBeatService(IAudioPlaybackEngine playbackEngine) : IBinauralBeatService
 {
     private const float LeftCarrierFrequency = 400f;
 
@@ -13,18 +11,15 @@ class BinauralBeatService
         new(5, "Gamma (30–70 Hz) => Cognitive Enhancement", 40f)
     ];
 
-    public List<BinauralPreset> GetPresets()
+    public IReadOnlyList<BinauralPreset> GetPresets()
     {
         return [.. Presets];
     }
 
     public BinauralSession CreateSession(int choice)
     {
-        BinauralPreset? preset = Presets.Find(item => item.Choice == choice);
-        if (preset is null)
-        {
-            throw new ArgumentOutOfRangeException(nameof(choice), "Choice must match an available preset.");
-        }
+        BinauralPreset? preset = Presets.Find(item => item.Choice == choice)
+            ?? throw new ArgumentOutOfRangeException(nameof(choice), "Choice must match an available preset.");
 
         float rightFrequency = LeftCarrierFrequency + preset.BeatFrequency;
         return new BinauralSession(preset.Name, preset.BeatFrequency, LeftCarrierFrequency, rightFrequency);
@@ -32,25 +27,11 @@ class BinauralBeatService
 
     public void Play(BinauralSession session, int durationInSeconds, Action<int>? onSecondElapsed = null)
     {
-        var provider = new BinauralBeatProvider(session.LeftFrequency, session.RightFrequency);
-        using var waveOut = new WaveOutEvent();
-        waveOut.Init(provider);
+        if (durationInSeconds <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(durationInSeconds), "Duration must be greater than zero.");
+        }
 
-        try
-        {
-            waveOut.Play();
-            for (int second = 1; second <= durationInSeconds; second++)
-            {
-                Thread.Sleep(1000);
-                onSecondElapsed?.Invoke(second);
-            }
-        }
-        finally
-        {
-            waveOut.Stop();
-        }
+        playbackEngine.Play(session, durationInSeconds, onSecondElapsed);
     }
 }
-
-record BinauralPreset(int Choice, string Name, float BeatFrequency);
-record BinauralSession(string Name, float BeatFrequency, float LeftFrequency, float RightFrequency);
