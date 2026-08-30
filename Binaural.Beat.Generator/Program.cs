@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Threading;
 using NAudio.Wave;
+using Spectre.Console;
 
 /// <summary>
 /// https://www.researchgate.net/publication/381952306_The_Efficiency_of_Binaural_Beats_on_Anxiety_and_Depression-A_Systematic_Review
@@ -8,48 +10,54 @@ class Program
 {
     static void Main()
     {
-        Console.WriteLine("=== Real-Time Binaural Beat Player ===");
-
         while (true)
         {
+            AnsiConsole.Clear();
+            ShowHeader();
+
             int choice = GetChoice();
             if (choice == 0)
             {
-                Console.WriteLine("Goodbye.");
+                AnsiConsole.MarkupLine("[green]Goodbye.[/]");
                 break;
             }
 
             float beatFreq = GetBeatFrequency(choice);
             int duration = GetDurationInSeconds();
             PlayBinauralBeat(beatFreq, duration);
-            Console.WriteLine("Finished.");
-            Console.WriteLine();
+            AnsiConsole.MarkupLine("[green]Finished.[/]");
+            AnsiConsole.MarkupLine("[grey]Press any key to return to the menu...[/]");
+            Console.ReadKey(true);
         }
+    }
+
+    static void ShowHeader()
+    {
+        AnsiConsole.Write(
+            new Panel("[bold cyan]Real-Time Binaural Beat Player[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.Cyan1));
+        AnsiConsole.WriteLine();
     }
 
     static int GetChoice()
     {
-        Console.Clear();
-        while (true)
-        {
-            Console.WriteLine("Choose target state:");
-            Console.WriteLine("0. Exit");
-            Console.WriteLine("1. Delta (1–4 Hz) => Deep Sleep");
-            Console.WriteLine("2. Theta (4–8 Hz) => Meditation");
-            Console.WriteLine("3. Alpha (8–13 Hz) => Relaxation");
-            Console.WriteLine("4. Beta (13–30 Hz) => Focus");
-            Console.WriteLine("5. Gamma (30–70 Hz) => Cognitive Enhancement");
-            Console.Write("Selection: ");
-
-            if (int.TryParse(Console.ReadLine(), out int choice) && choice >= 0 && choice <= 5)
+        var prompt = new SelectionPrompt<int>()
+            .Title("[yellow]Choose target state:[/]")
+            .PageSize(6)
+            .UseConverter(choice => choice switch
             {
-                return choice;
-            }
+                0 => "Exit",
+                1 => "Delta (1–4 Hz) => Deep Sleep",
+                2 => "Theta (4–8 Hz) => Meditation",
+                3 => "Alpha (8–13 Hz) => Relaxation",
+                4 => "Beta (13–30 Hz) => Focus",
+                5 => "Gamma (30–70 Hz) => Cognitive Enhancement",
+                _ => "Unknown"
+            });
 
-            Console.Clear();
-            Console.WriteLine("Invalid choice. Please enter a number between 0 and 5.");
-            Console.WriteLine();
-        }
+        prompt.AddChoices([0, 1, 2, 3, 4, 5]);
+        return AnsiConsole.Prompt(prompt);
     }
 
     static float GetBeatFrequency(int choice)
@@ -67,19 +75,11 @@ class Program
 
     static int GetDurationInSeconds()
     {
-
-        Console.Clear();
-        while (true)
-        {
-            Console.Write("Duration in seconds: ");
-            if (int.TryParse(Console.ReadLine(), out int duration) && duration > 0)
-            {
-                return duration;
-            }
-
-            Console.Clear();
-            Console.WriteLine("Invalid duration. Please enter a positive integer.");
-        }
+        return AnsiConsole.Prompt(
+            new TextPrompt<int>("[yellow]Duration in seconds:[/]")
+                .Validate(duration => duration > 0
+                    ? ValidationResult.Success()
+                    : ValidationResult.Error("[red]Please enter a positive integer.[/]")));
     }
 
     static void PlayBinauralBeat(float beatFreq, int durationInSeconds)
@@ -87,17 +87,41 @@ class Program
         const float LeftFreq = 400f;
         float rightFreq = LeftFreq + beatFreq;
 
-        Console.WriteLine($"Playing {beatFreq} Hz binaural beat...");
-        Console.WriteLine($"Left ear: {LeftFreq} Hz");
-        Console.WriteLine($"Right ear: {rightFreq} Hz");
+        AnsiConsole.Write(
+            new Panel($"[bold]Playing:[/] [green]{beatFreq} Hz[/]\nLeft ear: [cyan]{LeftFreq} Hz[/]\nRight ear: [cyan]{rightFreq} Hz[/]")
+                .Header("[white]Session[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.Green));
 
         var provider = new BinauralBeatProvider(LeftFreq, rightFreq);
         using var waveOut = new WaveOutEvent();
         waveOut.Init(provider);
-        waveOut.Play();
 
-        System.Threading.Thread.Sleep(durationInSeconds * 1000);
+        try
+        {
+            waveOut.Play();
 
-        waveOut.Stop();
+            AnsiConsole.Progress()
+                .Columns(
+                [
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new RemainingTimeColumn()
+                ])
+                .Start(ctx =>
+                {
+                    var task = ctx.AddTask("[green]Playing[/]", maxValue: durationInSeconds);
+                    while (!task.IsFinished)
+                    {
+                        Thread.Sleep(1000);
+                        task.Increment(1);
+                    }
+                });
+        }
+        finally
+        {
+            waveOut.Stop();
+        }
     }
 }
