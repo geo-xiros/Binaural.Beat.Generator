@@ -8,8 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Spectre.Console" Version="0.49.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Binaural.Beat.Application\Binaural.Beat.Application.csproj" />
+    <ProjectReference Include="..\Binaural.Beat.Domain\Binaural.Beat.Domain.csproj" />
+    <ProjectReference Include="..\Binaural.Beat.Infrastructure.Audio.NAudio\Binaural.Beat.Infrastructure.Audio.NAudio.csproj" />
   </ItemGroup>
 
 </Project>

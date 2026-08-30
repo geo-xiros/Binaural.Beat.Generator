@@ -1,12 +1,14 @@
-﻿using Spectre.Console;
+﻿using Binaural.Beat.Application;
+using Binaural.Beat.Domain;
+using Binaural.Beat.Infrastructure.Audio.NAudio;
+using Spectre.Console;
 
 
 class Program
 {
-
     static void Main()
     {
-        BinauralBeatService service = new(new NAudioPlaybackEngine());
+        IBinauralBeatService service = new BinauralBeatService(new NAudioPlaybackEngine());
 
         while (true)
         {
@@ -63,7 +65,7 @@ class Program
                     : ValidationResult.Error("[red]Please enter a positive integer.[/]")));
     }
 
-    static void RunPlaybackScreen(BinauralBeatService service, BinauralSession session, int durationInSeconds)
+    static void RunPlaybackScreen(IBinauralBeatService service, BinauralSession session, int durationInSeconds)
     {
         AnsiConsole.Write(
             new Panel($"[bold]Playing:[/] [green]{session.BeatFrequency} Hz[/]\nLeft ear: [cyan]{session.LeftFrequency} Hz[/]\nRight ear: [cyan]{session.RightFrequency} Hz[/]")
