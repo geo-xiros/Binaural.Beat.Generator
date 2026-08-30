@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MahApps.Metro" Version="2.4.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Binaural.Beat.Application\Binaural.Beat.Application.csproj" />
+    <ProjectReference Include="..\Binaural.Beat.Domain\Binaural.Beat.Domain.csproj" />
+    <ProjectReference Include="..\Binaural.Beat.Infrastructure.Audio.NAudio\Binaural.Beat.Infrastructure.Audio.NAudio.csproj" />
+  </ItemGroup>
+
+</Project>

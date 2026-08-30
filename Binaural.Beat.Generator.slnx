@@ -3,4 +3,5 @@
   <Project Path="Binaural.Beat.Domain/Binaural.Beat.Domain.csproj" />
   <Project Path="Binaural.Beat.Generator/Binaural.Beat.Generator.csproj" />
   <Project Path="Binaural.Beat.Infrastructure.Audio.NAudio/Binaural.Beat.Infrastructure.Audio.NAudio.csproj" />
+  <Project Path="Binaural.Beat.WpfClient/Binaural.Beat.WpfClient.csproj" />
 </Solution>
