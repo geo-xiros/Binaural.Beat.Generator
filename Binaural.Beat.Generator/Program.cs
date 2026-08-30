@@ -6,23 +6,26 @@ using Spectre.Console;
 
 class Program
 {
+    private record Choice(string Description, BinauralPreset? BinauralPreset = null);
+
     static void Main()
     {
-        IBinauralBeatService service = new BinauralBeatService(new NAudioPlaybackEngine());
+        BinauralBeatService service = new(new NAudioPlaybackEngine());
+        var presetChoices = service.GetPresets().Select(preset => new Choice(preset.Name, preset)).ToList();
 
         while (true)
         {
             AnsiConsole.Clear();
             ShowHeader();
 
-            int choice = GetChoice(service.GetPresets());
-            if (choice == 0)
+            var choice = GetChoice(presetChoices);
+            if (choice.BinauralPreset is null)
             {
                 AnsiConsole.MarkupLine("[green]Goodbye.[/]");
                 break;
             }
 
-            BinauralSession session = service.CreateSession(choice);
+            BinauralSession session = service.CreateSession(choice.BinauralPreset);
             int duration = GetDurationInSeconds();
 
             RunPlaybackScreen(service, session, duration);
@@ -41,19 +44,13 @@ class Program
         AnsiConsole.WriteLine();
     }
 
-    static int GetChoice(IReadOnlyList<BinauralPreset> binauralPresets)
+    static Choice GetChoice(IReadOnlyList<Choice> presetChoices)
     {
-        var prompt = new SelectionPrompt<int>()
-            .Title("[yellow]Choose target state:[/]")
-            .PageSize(binauralPresets.Count + 1)
-            .UseConverter(choice => choice switch
-            {
-                0 => "Exit",
-                _ => binauralPresets.FirstOrDefault(preset => preset.Choice == choice)?.Name ?? "Unknown"
-            });
-
-        prompt.AddChoices([0, .. binauralPresets.Select(preset => preset.Choice)]);
-        return AnsiConsole.Prompt(prompt);
+        return AnsiConsole.Prompt(
+            new SelectionPrompt<Choice>()
+                .Title("[yellow]Choose target state:[/]")
+                .AddChoices([new Choice("Exit"), .. presetChoices])
+                .UseConverter(choice => choice.Description));
     }
 
     static int GetDurationInSeconds()
@@ -65,7 +62,7 @@ class Program
                     : ValidationResult.Error("[red]Please enter a positive integer.[/]")));
     }
 
-    static void RunPlaybackScreen(IBinauralBeatService service, BinauralSession session, int durationInSeconds)
+    static void RunPlaybackScreen(BinauralBeatService service, BinauralSession session, int durationInSeconds)
     {
         AnsiConsole.Write(
             new Panel($"[bold]Playing:[/] [green]{session.BeatFrequency} Hz[/]\nLeft ear: [cyan]{session.LeftFrequency} Hz[/]\nRight ear: [cyan]{session.RightFrequency} Hz[/]")

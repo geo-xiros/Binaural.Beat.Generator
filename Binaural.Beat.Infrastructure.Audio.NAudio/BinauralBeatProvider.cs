@@ -2,23 +2,23 @@ using NAudio.Wave;
 
 namespace Binaural.Beat.Infrastructure.Audio.NAudio;
 
-internal sealed class BinauralBeatProvider(float LeftFrequency, float RightFrequency) : WaveProvider32(44100, 2)
+internal sealed class BinauralBeatProvider(float leftFrequency, float rightFrequency) : WaveProvider32(44100, 2)
 {
     private float Time;
 
-    public override int Read(float[] Buffer, int Offset, int SampleCount)
+    public override int Read(float[] buffer, int offset, int sampleCount)
     {
-        for (int Index = 0; Index < SampleCount; Index += 2)
+        for (int index = 0; index < sampleCount; index += 2)
         {
-            float Left = (float)Math.Sin(2 * Math.PI * LeftFrequency * Time);
-            float Right = (float)Math.Sin(2 * Math.PI * RightFrequency * Time);
+            float left = (float)Math.Sin(2 * Math.PI * leftFrequency * Time);
+            float right = (float)Math.Sin(2 * Math.PI * rightFrequency * Time);
 
-            Buffer[Offset + Index] = Left;
-            Buffer[Offset + Index + 1] = Right;
+            buffer[offset + index] = left;
+            buffer[offset + index + 1] = right;
 
             Time += 1f / WaveFormat.SampleRate;
         }
 
-        return SampleCount;
+        return sampleCount;
     }
 }

@@ -130,7 +130,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return;
         }
 
-        BinauralSession session = service.CreateSession(SelectedPreset.Choice);
+        BinauralSession session = service.CreateSession(SelectedPreset);
         BindSession(session);
 
         ProgressMaximum = durationInSeconds;

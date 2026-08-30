@@ -5,5 +5,5 @@ namespace Binaural.Beat.Application;
 
 public interface IAudioPlaybackEngine
 {
-    void Play(BinauralSession Session, int DurationInSeconds, Action<int>? OnSecondElapsed = null, CancellationToken CancellationToken = default);
+    void Play(BinauralSession session, int durationInSeconds, Action<int>? onSecondElapsed = null, CancellationToken cancellationToken = default);
 }

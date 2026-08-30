@@ -6,6 +6,6 @@ namespace Binaural.Beat.Application;
 public interface IBinauralBeatService
 {
     IReadOnlyList<BinauralPreset> GetPresets();
-    BinauralSession CreateSession(int Choice);
-    void Play(BinauralSession Session, int DurationInSeconds, Action<int>? OnSecondElapsed = null, CancellationToken CancellationToken = default);
+    BinauralSession CreateSession(BinauralPreset preset);
+    void Play(BinauralSession session, int durationInSeconds, Action<int>? onSecondElapsed = null, CancellationToken cancellationToken = default);
 }

@@ -7,33 +7,34 @@ namespace Binaural.Beat.Infrastructure.Audio.NAudio;
 
 public sealed class NAudioPlaybackEngine : IAudioPlaybackEngine
 {
-    public void Play(BinauralSession Session, int DurationInSeconds, Action<int>? OnSecondElapsed = null, CancellationToken CancellationToken = default)
+    public void Play(BinauralSession session, int durationInSeconds, Action<int>? onSecondElapsed = null, CancellationToken cancellationToken = default)
     {
-        var Provider = new BinauralBeatProvider(Session.LeftFrequency, Session.RightFrequency);
-        using var WaveOut = new WaveOutEvent();
-        WaveOut.Init(Provider);
+        var provider = new BinauralBeatProvider(session.LeftFrequency, session.RightFrequency);
+
+        using var waveOut = new WaveOutEvent();
+        waveOut.Init(provider);
 
         try
         {
-            WaveOut.Play();
-            for (int Second = 1; Second <= DurationInSeconds; Second++)
+            waveOut.Play();
+            for (int second = 1; second <= durationInSeconds; second++)
             {
-                if (CancellationToken.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
 
-                if (CancellationToken.WaitHandle.WaitOne(1000))
+                if (cancellationToken.WaitHandle.WaitOne(1000))
                 {
                     return;
                 }
 
-                OnSecondElapsed?.Invoke(Second);
+                onSecondElapsed?.Invoke(second);
             }
         }
         finally
         {
-            WaveOut.Stop();
+            waveOut.Stop();
         }
     }
 }
